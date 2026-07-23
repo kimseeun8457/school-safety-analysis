@@ -1,5 +1,5 @@
 project:
-  name: school-safety-p4-safe
+  name: elementary-school-safety-p4-safe
   random_seed: 42
   timezone: Asia/Seoul
 
@@ -12,7 +12,12 @@ paths:
   outputs: outputs
 
 data:
-  unit_of_analysis: "school_or_region_x_school_level_x_week_x_risk_context"
+  target_population: elementary_school_students
+  comparison_population: all_school_levels
+  unit_of_analysis: "elementary_school_or_region_x_grade_band_x_week_x_risk_context"
+  inclusion_rules:
+    - "school_level == 초등학교 for primary modelling"
+    - "all school levels retained only for comparative and extension analyses"
   temporal_split:
     train_end: "2023-12-31"
     validation_end: "2024-12-31"
