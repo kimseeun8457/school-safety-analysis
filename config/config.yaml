@@ -1,0 +1,44 @@
+project:
+  name: school-safety-p4-safe
+  random_seed: 42
+  timezone: Asia/Seoul
+
+paths:
+  raw_data: data/raw
+  external_data: data/external
+  interim_data: data/interim
+  processed_data: data/processed
+  metadata: data/metadata
+  outputs: outputs
+
+data:
+  unit_of_analysis: "school_or_region_x_school_level_x_week_x_risk_context"
+  temporal_split:
+    train_end: "2023-12-31"
+    validation_end: "2024-12-31"
+    test_start: "2025-01-01"
+  privacy:
+    minimum_reporting_cell_size: 5
+    allow_school_level_export: false
+
+modelling:
+  frequency_target: incident_count
+  severity_target: total_compensation
+  exposure_column: student_hours
+  baseline_model: negative_binomial
+  candidate_models: [catboost, lightgbm, xgboost]
+  calibration_method: isotonic
+
+scoring:
+  name: preventive_priority_score
+  weights:
+    predicted_incident_rate: 0.30
+    severity: 0.25
+    recurrence: 0.15
+    preventability: 0.20
+    intervention_cost: -0.10
+  top_actions_per_school: 3
+
+reporting:
+  language: ko
+  figure_dpi: 200
