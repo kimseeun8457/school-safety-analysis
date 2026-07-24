@@ -2,36 +2,55 @@
 __pycache__/
 *.py[cod]
 *.pyo
-__pycache__/
 
-# Virtual Environment
+# Virtual environments and environment variables
 .venv/
 venv/
 env/
+.env
 
 # Jupyter
 .ipynb_checkpoints/
 
-# macOS
+# Operating system and editor files
 .DS_Store
-
-# VS Code
 .vscode/
 
-# Environment Variables
-.env
-
-# Output
-outputs/
-
-# Data
-data/processed/
-data/external/
-data/raw/
-outputs/
-
-# Logs
+# Logs and temporary files
 *.log
-
-# Temporary
 *.tmp
+
+# Input and generated data (keep directory placeholders only)
+data/raw/*
+!data/raw/.gitkeep
+!data/raw/accident/
+data/raw/accident/*
+!data/raw/accident/.gitkeep
+!data/raw/compensation/
+data/raw/compensation/*
+!data/raw/compensation/.gitkeep
+data/external/*
+!data/external/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Analysis outputs (keep directory placeholders only)
+outputs/*
+!outputs/.gitkeep
+!outputs/figures/
+outputs/figures/*
+!outputs/figures/.gitkeep
+!outputs/tables/
+outputs/tables/*
+!outputs/tables/.gitkeep
+!outputs/models/
+outputs/models/*
+!outputs/models/.gitkeep
+!outputs/shap/
+outputs/shap/*
+!outputs/shap/.gitkeep
+!outputs/pps/
+outputs/pps/*
+!outputs/pps/.gitkeep

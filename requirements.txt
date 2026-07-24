@@ -1,23 +1,12 @@
 pandas
 numpy
 matplotlib
+seaborn
+scipy
+statsmodels
 scikit-learn
 xgboost
-catboost
 shap
-jupyter
+joblib
+tqdm
 openpyxl
-
-'''
-각 라이브러리 역할
-
-* pandas → 데이터 처리
-* numpy → 수치 계산
-* matplotlib → 그래프
-* scikit-learn → 머신러닝
-* xgboost → 예측 모델
-* catboost → 범주형 데이터 모델
-* shap → 모델 해석
-* jupyter → Notebook
-* openpyxl → Excel 읽기
-'''

@@ -1,67 +1,117 @@
-# P4-SAFE: 초등학교 안전 예방관리 우선순위체계
+# 초등학교 안전사고 데이터 기반 위험요인 분석 및 PPS 산출
 
-> **Predict · Profile · Prioritize · Prove**
+초등학교 안전사고 데이터의 발생 특성을 분석하고, Explainable AI(XGBoost + SHAP)를 이용해 주요 위험요인을 해석하여 예방관리 우선순위를 제안하는 프로젝트입니다.
 
-초등학교 안전사고 데이터를 바탕으로 제한된 인력·시간·예산을 어떤 위험상황에 먼저 배치해야 하는지 제안하는 재현 가능한 정책 데이터과학 프로젝트입니다. 전 학교급 데이터는 초등학교 사고 패턴을 비교하고 향후 확장 가능성을 검증하는 보조 분석에 활용합니다.
+## 프로젝트 목표
 
-## 연구 목표
+- 초등학교 안전사고가 언제, 어디서, 어떤 활동 중 발생하는지 분석합니다.
+- 사고 발생과 관련된 위험요인을 머신러닝으로 분류하고 해석합니다.
+- 사고 빈도, 모델 기반 위험도, 보상 기반 피해 규모를 함께 고려한 Preventive Priority Score(PPS)를 산출합니다.
+- 학교 현장에서 우선적으로 관리할 위험상황을 제안합니다.
 
-- 초등학교의 사고 이후 귀책 판단이 아닌 **사전 예방관리 기준**을 설계합니다.
-- 사고 빈도, 심각도, 반복성, 예방가능성, 개입비용을 통합한 `Preventive Priority Score (PPS)`를 개발합니다.
-- 결과를 학교·교육청이 실행 가능한 `Top 3 예방관리 과제`로 변환합니다.
+## 분석 대상과 데이터 활용 원칙
 
-## 핵심 질문
+- 분석 대상은 2023~2025년 초등학교 안전사고 데이터입니다.
+- 사고 데이터는 전처리, EDA, 통계분석, 피처 엔지니어링 및 모델링에 사용합니다.
+- 보상 데이터는 사고 데이터와 행 단위로 결합하지 않습니다. 두 데이터에는 동일 사고를 식별할 수 있는 공통 키가 없으므로, 보상 데이터는 사고 유형별 피해 규모(Severity)를 산출하는 독립 자료로 사용합니다.
 
-1. 초등학교에서 어떤 `학년군 × 시기 × 장소 × 활동` 조합을 우선 관리해야 하는가?
-2. 동일한 예방자원으로 예상 손실을 가장 크게 줄일 수 있는 개입은 무엇인가?
-3. 제안한 우선순위가 실제 사고·피해 부담을 줄이는가?
+## 폴더 구조
 
-## 연구 범위
+```text
+.
+├── data/
+│   ├── raw/
+│   │   ├── accident/       # 원본 사고 데이터
+│   │   └── compensation/   # 원본 보상 데이터
+│   ├── interim/            # 단계 간 임시 데이터
+│   └── processed/          # 정제 데이터
+├── notebooks/              # 탐색 및 검증용 노트북
+├── scripts/                # 실행 순서가 명시된 분석 스크립트
+├── outputs/
+│   ├── figures/            # 시각화 결과
+│   ├── tables/             # 분석 결과 표
+│   ├── models/             # 학습 모델
+│   ├── shap/               # SHAP 분석 결과
+│   └── pps/                # PPS 및 민감도 분석 결과
+├── docs/                   # 분석 설계 및 데이터 계보 문서
+├── README.md
+├── requirements.txt
+└── .gitignore
+```
 
-- **주 분석 대상**: 전국 초등학교 재학생의 학교안전사고
-- **주 분석 상황**: 쉬는시간, 체육, 급식, 복도·계단, 운동장·놀이공간 등 학교가 직접 관리할 수 있는 일상 활동
-- **비교·확장 분석**: 유치원·중학교·고등학교 등 전 학교급의 패턴 비교 및 프레임워크 확장성 점검
-- **제외 목적**: 교원 개인의 과실·책임·성과를 판단하거나 학교를 낙인찍는 분석
+원본 데이터와 실행 산출물은 Git에 커밋하지 않습니다.
 
-## 빠른 시작
+## 실행 환경
 
 ```bash
-git clone <repository-url>
-cd school-safety-p4-safe
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
-cp .env.example .env
 ```
 
-원자료는 `data/raw/`에만 보관하며 Git에 커밋하지 않습니다. `config/config.yaml`에서 실행 환경을 설정합니다.
+원본 사고 CSV는 `data/raw/accident/`, 보상 CSV는 `data/raw/compensation/`에 저장합니다.
 
-## 디렉터리 안내
+## 실행 순서
 
-| 경로 | 용도 |
-|---|---|
-| `data/` | 원본, 외부, 중간, 정제 데이터 및 메타데이터 |
-| `docs/` | 연구 설계, 분석계획, 변수사전, 의사결정·실험 기록 |
-| `notebooks/` | 탐색·검증용 분석 노트북 |
-| `src/` | 재사용 가능한 데이터·모델·점수화 코드 |
-| `outputs/` | 표, 그림, 학습모델, 대시보드 산출물 |
-| `tests/` | 데이터 품질 및 코드 테스트 |
+아래 스크립트는 번호 순서대로 실행합니다. 각 스크립트는 하나의 분석 역할만 수행합니다.
 
-## 재현성과 윤리
+1. `python scripts/01_preprocessing.py` — 사고·보상 원본 데이터를 정제하여 `data/processed/accident_clean.csv`, `data/processed/compensation_clean.csv`를 생성합니다.
+2. `python scripts/02_eda.py` — 사고 분포와 교차분석 결과를 `outputs/figures/`, `outputs/tables/`에 저장합니다.
+3. `python scripts/03_statistical_analysis.py` — 카이제곱 검정과 Cramer's V 결과를 생성합니다.
+4. `python scripts/04_feature_engineering.py` — 모델 학습용 `model_dataset.csv`를 생성합니다.
+5. `python scripts/05_model_training.py` — Decision Tree, Random Forest, XGBoost 모델을 학습합니다.
+6. `python scripts/06_model_evaluation.py` — 모델 성능과 혼동행렬, ROC 곡선, 중요도를 평가합니다.
+7. `python scripts/07_shap_analysis.py` — SHAP 기반 전역·국소 위험요인 해석을 수행합니다.
+8. `python scripts/08_compensation_analysis.py` — 보상 데이터로 Severity Score를 산출합니다.
+9. `python scripts/09_pps_calculation.py` — Frequency, Risk, Severity를 결합해 PPS 순위를 생성합니다.
+10. `python scripts/10_sensitivity_analysis.py` — PPS 가중치 조합별 순위 안정성을 분석합니다.
+11. `python scripts/11_visualization.py` — 최종 분석 결과를 시각화합니다.
 
-- 개인·학교 식별정보를 커밋하거나 공개하지 않습니다.
-- 위험점수는 교원·학교의 징계, 책임판단, 성과평가에 사용하지 않습니다.
-- 모든 모델은 시간 기준 검증, 불확실성, 공정성 점검을 포함합니다.
-- 중요한 선택은 `docs/decision_log.md`에 기록합니다.
+## 분석 파이프라인
 
-## 개발 명령어
+```text
+사고 원본 데이터 → 전처리 → EDA / 통계분석 → 피처 엔지니어링
+→ 모델 학습 → 모델 평가 → SHAP 위험요인 해석
 
-```bash
-ruff check src tests
-pytest -q
-jupyter lab
+보상 원본 데이터 → 전처리 → 보상 분석 → Severity Score
+
+Frequency Score + Risk Score + Severity Score
+→ PPS 산출 → 민감도 분석 → 예방관리 우선순위 제안
 ```
 
-## 라이선스
+## 위험상황과 모델링
 
-코드와 문서는 [MIT License](LICENSE)를 따릅니다. 데이터 이용 조건은 각 제공기관의 정책을 따릅니다.
+개별 사고를 예측하는 대신, 다음 조합을 하나의 위험상황(Risk Context)으로 정의합니다.
+
+- 장소
+- 사고형태
+- 사고당시활동
+- 시간대
+- 학년
+
+위험상황별 사고 빈도를 기준으로 위험수준을 High, Medium, Low로 구분합니다. 모델 입력 변수는 지역, 학년, 성별, 요일, 시간대, 장소, 사고형태, 활동, 월, 계절입니다.
+
+## Preventive Priority Score (PPS)
+
+PPS는 학교가 우선적으로 관리할 위험상황을 정량화하는 지표입니다. 각 위험상황에 대해 다음 요소를 0~1 범위로 정규화하고 가중합합니다.
+
+- **Frequency**: 위험상황별 사고 발생 빈도
+- **Risk**: XGBoost가 예측한 위험수준 또는 예측 확률
+- **Severity**: 보상 데이터로 산출한 피해 규모
+
+기본 PPS 예시는 `0.4 × Frequency + 0.3 × Risk + 0.3 × Severity`이며, 민감도 분석에서 여러 가중치 조합을 비교해 결과의 안정성을 평가합니다.
+
+## 주요 산출물
+
+- 정제 데이터: `data/processed/accident_clean.csv`, `data/processed/compensation_clean.csv`
+- 분석 표와 시각화: `outputs/tables/`, `outputs/figures/`
+- 모델: `outputs/models/`
+- SHAP 결과: `outputs/shap/`
+- PPS 결과와 민감도 분석: `outputs/pps/`
+
+## 참고 문서
+
+- [분석 계획](docs/analysis_plan.md)
+- [프로젝트 파이프라인](docs/project_pipeline.md)
+- [데이터 계보](docs/data_lineage.md)
+- [모델링 전략](docs/modeling_strategy.md)
