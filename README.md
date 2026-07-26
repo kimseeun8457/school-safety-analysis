@@ -58,7 +58,7 @@ pip install -r requirements.txt
 2. `python scripts/02_eda.py` — 사고 분포와 교차분석 결과를 생성합니다.
 3. `python scripts/03_statistical_analysis.py` — 카이제곱 검정과 Cramér's V를 산출합니다.
 4. `python scripts/04_association_rules.py` — Apriori 기반 빈발항목집합과 연관규칙을 생성합니다.
-5. `python scripts/05_compensation_analysis.py` — 보상 데이터의 피해 규모를 분석합니다.
+5. `python scripts/05_compensation_analysis.py` — 보상 데이터의 피해 규모를 분석해 `severity_summary.csv`를 생성합니다.
 6. `python scripts/06_pps_calculation.py` — Frequency·Association·Severity를 결합해 PPS를 산출합니다.
 7. `python scripts/07_visualization.py` — 결과를 시각화하고 예방관리 우선순위를 제시합니다.
 

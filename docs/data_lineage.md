@@ -14,7 +14,7 @@ data/raw/compensation/
   ↓ 01_preprocessing.py
 data/processed/compensation_clean.csv
   ↓ 05_compensation_analysis.py
-Severity 결과
+severity_summary.csv, compensation_overview.csv
 
 Frequency + Association + Severity
   ↓ 06_pps_calculation.py
@@ -31,7 +31,7 @@ outputs/pps/pps_result.csv
 | EDA | `accident_clean.csv` | `eda_summary.csv`, `eda_cross_table.csv`, 그림 | 분포와 위험상황 탐색 |
 | 통계분석 | `accident_clean.csv` | 카이제곱, Cramér's V, 교차표 | 변수 연관성 검정 |
 | 연관규칙 | `accident_clean.csv` | 빈발항목집합, 연관규칙 | 반복 조합 식별 |
-| 보상분석 | `compensation_clean.csv` | Severity 결과 | 피해 규모 정량화 |
+| 보상분석 | `compensation_clean.csv` | `severity_summary.csv`, `compensation_overview.csv` | 피해 규모 정량화 |
 | PPS | Frequency, Association, Severity | PPS 결과와 순위 | 예방 우선순위 산출 |
 
 사고 데이터와 보상 데이터는 동일 사고를 식별할 공통 키가 없으므로 행 단위로 결합하지 않는다.

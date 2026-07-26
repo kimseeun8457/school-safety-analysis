@@ -14,7 +14,7 @@ accident_clean.csv / compensation_clean.csv
 
 compensation_clean.csv
   ↓
-05_compensation_analysis.py → Severity
+05_compensation_analysis.py → severity_summary.csv, compensation_overview.csv
 
 Frequency + Association + Severity
   ↓
@@ -31,7 +31,7 @@ Frequency + Association + Severity
 | 2 | `02_eda.py` | 사고 특성 및 교차분석 탐색 | `eda_summary.csv`, 분포도, 히트맵 |
 | 3 | `03_statistical_analysis.py` | 범주형 변수 관계 검정 | 카이제곱, Cramér's V, 교차표 |
 | 4 | `04_association_rules.py` | Apriori 연관규칙 분석 | 빈발항목집합, 연관규칙 |
-| 5 | `05_compensation_analysis.py` | 피해 규모 분석 | Severity 요약 |
+| 5 | `05_compensation_analysis.py` | 피해 규모 분석 | `severity_summary.csv`, `compensation_overview.csv` |
 | 6 | `06_pps_calculation.py` | PPS 산출 | PPS 결과와 순위 |
 | 7 | `07_visualization.py` | 최종 시각화 및 정책 제안 | PPS 차트와 정책 결과 |
 
