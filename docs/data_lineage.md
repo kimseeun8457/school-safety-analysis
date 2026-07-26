@@ -20,7 +20,7 @@ Frequency + Association + Severity
   ↓ 06_pps_calculation.py
 outputs/pps/pps_result.csv
   ↓ 07_visualization.py
-예방관리 우선순위 및 정책 제안
+pps_top_contexts.png, pps_component_comparison.png, policy_recommendations.csv
 ```
 
 ## 단계별 입출력

@@ -33,7 +33,7 @@ Frequency + Association + Severity
 | 4 | `04_association_rules.py` | Apriori 연관규칙 분석 | 빈발항목집합, 연관규칙 |
 | 5 | `05_compensation_analysis.py` | 피해 규모 분석 | `severity_summary.csv`, `compensation_overview.csv` |
 | 6 | `06_pps_calculation.py` | PPS 산출 | PPS 결과와 순위 |
-| 7 | `07_visualization.py` | 최종 시각화 및 정책 제안 | PPS 차트와 정책 결과 |
+| 7 | `07_visualization.py` | 최종 시각화 및 정책 제안 | PPS 차트와 `policy_recommendations.csv` |
 
 ## 폴더 구조
 
