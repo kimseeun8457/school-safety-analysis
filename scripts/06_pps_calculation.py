@@ -1,0 +1,309 @@
+"""Calculate Preventive Priority Scores for accident risk contexts."""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+from typing import Final
+
+import pandas as pd
+
+
+PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parents[1]
+ACCIDENT_INPUT_PATH: Final[Path] = (
+    PROJECT_ROOT / "data" / "processed" / "accident_clean.csv"
+)
+COMPENSATION_INPUT_PATH: Final[Path] = (
+    PROJECT_ROOT / "data" / "processed" / "compensation_clean.csv"
+)
+RULES_INPUT_PATH: Final[Path] = (
+    PROJECT_ROOT / "outputs" / "association_rules" / "association_rules.csv"
+)
+OUTPUT_PATH: Final[Path] = PROJECT_ROOT / "outputs" / "pps" / "pps_result.csv"
+RISK_CONTEXT_COLUMNS: Final[list[str]] = ["place", "activity", "accident_type"]
+PAYMENT_COLUMNS: Final[list[str]] = [
+    "medical_benefit",
+    "disability_benefit",
+    "care_benefit",
+    "survivor_benefit",
+    "funeral_expense",
+    "consolation_payment",
+    "preservation_cost",
+]
+
+
+def configure_logging() -> None:
+    """Configure consistent console logging for PPS calculation."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(message)s",
+    )
+
+
+def load_csv(input_path: Path, required_columns: list[str]) -> pd.DataFrame:
+    """Load a CSV file and validate its required columns.
+
+    Args:
+        input_path: CSV file to load.
+        required_columns: Columns required for the current PPS component.
+
+    Returns:
+        Loaded and validated data.
+
+    Raises:
+        FileNotFoundError: If the input file is absent.
+        ValueError: If required columns are missing or the input is empty.
+    """
+    if not input_path.is_file():
+        raise FileNotFoundError(f"Input file does not exist: {input_path}")
+
+    data = pd.read_csv(input_path, encoding="utf-8-sig")
+    missing_columns = sorted(set(required_columns) - set(data.columns))
+    if missing_columns:
+        raise ValueError(f"Missing required columns: {missing_columns}")
+    if data.empty:
+        raise ValueError(f"Input data is empty: {input_path}")
+    return data
+
+
+def min_max_normalize(values: pd.Series) -> pd.Series:
+    """Normalize a numeric series to the 0-1 range.
+
+    Args:
+        values: Numeric values to normalize.
+
+    Returns:
+        Min-Max normalized values, or zero when all values are equal.
+    """
+    minimum = values.min()
+    maximum = values.max()
+    if pd.isna(minimum) or pd.isna(maximum) or minimum == maximum:
+        return pd.Series(0.0, index=values.index)
+    return (values - minimum) / (maximum - minimum)
+
+
+def calculate_frequency_scores(accident_data: pd.DataFrame) -> pd.DataFrame:
+    """Calculate risk-context occurrence counts and frequency scores.
+
+    Args:
+        accident_data: Cleaned accident data.
+
+    Returns:
+        One row per risk context with a normalized frequency score.
+    """
+    frequency = (
+        accident_data.groupby(RISK_CONTEXT_COLUMNS, observed=True)
+        .size()
+        .reset_index(name="occurrence_count")
+    )
+    frequency["frequency_score"] = min_max_normalize(frequency["occurrence_count"])
+    return frequency
+
+
+def calculate_severity_scores(compensation_data: pd.DataFrame) -> pd.DataFrame:
+    """Calculate context-level median compensation and severity scores.
+
+    Args:
+        compensation_data: Cleaned compensation data.
+
+    Returns:
+        One row per risk context with a normalized median compensation score.
+    """
+    compensation_data = compensation_data.copy()
+    compensation_data["total_compensation"] = compensation_data[PAYMENT_COLUMNS].sum(
+        axis=1
+    )
+    severity = (
+        compensation_data.groupby(RISK_CONTEXT_COLUMNS, observed=True)[
+            "total_compensation"
+        ]
+        .median()
+        .reset_index(name="median_compensation")
+    )
+    severity["severity_score"] = min_max_normalize(severity["median_compensation"])
+    return severity
+
+
+def extract_risk_context(rule: pd.Series) -> tuple[str, str, str] | None:
+    """Extract a complete risk context from one association rule.
+
+    Args:
+        rule: Association-rule row with antecedent and consequent item strings.
+
+    Returns:
+        A ``place, activity, accident_type`` tuple when all three items exist;
+        otherwise ``None``.
+    """
+    context: dict[str, str] = {}
+    items = f"{rule['antecedents']} | {rule['consequents']}".split(" | ")
+    for item in items:
+        column, separator, value = item.partition("=")
+        if not separator or column not in RISK_CONTEXT_COLUMNS:
+            continue
+        if column in context and context[column] != value:
+            return None
+        context[column] = value
+
+    if set(context) != set(RISK_CONTEXT_COLUMNS):
+        return None
+    return tuple(context[column] for column in RISK_CONTEXT_COLUMNS)
+
+
+def calculate_association_scores(rules: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate Apriori confidence and lift at the risk-context level.
+
+    Args:
+        rules: Association rules generated by the Apriori analysis step.
+
+    Returns:
+        One row per complete risk context with its mean association score.
+    """
+    context_records: list[dict[str, object]] = []
+    for _, rule in rules.iterrows():
+        context = extract_risk_context(rule)
+        if context is None:
+            continue
+        context_records.append(
+            {
+                "place": context[0],
+                "activity": context[1],
+                "accident_type": context[2],
+                "confidence": rule["confidence"],
+                "lift": rule["lift"],
+            }
+        )
+
+    if not context_records:
+        logging.warning("No association rules contain a complete risk context")
+        return pd.DataFrame(
+            columns=[*RISK_CONTEXT_COLUMNS, "association_score"]
+        )
+
+    context_rules = pd.DataFrame(context_records)
+    context_rules["normalized_confidence"] = min_max_normalize(
+        context_rules["confidence"]
+    )
+    context_rules["normalized_lift"] = min_max_normalize(context_rules["lift"])
+    context_rules["rule_association_score"] = (
+        0.5 * context_rules["normalized_confidence"]
+        - 0.5 * context_rules["normalized_lift"]
+    )
+    association = (
+        context_rules.groupby(RISK_CONTEXT_COLUMNS, observed=True)[
+            "rule_association_score"
+        ]
+        .mean()
+        .reset_index(name="association_score")
+    )
+    logging.info(
+        "Mapped %s rules to %s complete risk contexts",
+        len(context_rules),
+        len(association),
+    )
+    return association
+
+
+def calculate_pps(
+    frequency: pd.DataFrame,
+    association: pd.DataFrame,
+    severity: pd.DataFrame,
+) -> pd.DataFrame:
+    """Combine Frequency, Association, and Severity into PPS values.
+
+    Args:
+        frequency: Context-level occurrence counts and frequency scores.
+        association: Context-level association scores from Apriori rules.
+        severity: Context-level severity scores from median compensation.
+
+    Returns:
+        Risk contexts sorted by PPS with a dense descending rank.
+    """
+    pps = frequency.merge(association, on=RISK_CONTEXT_COLUMNS, how="left")
+    pps = pps.merge(severity, on=RISK_CONTEXT_COLUMNS, how="left")
+    missing_association = pps["association_score"].isna().sum()
+    missing_severity = pps["severity_score"].isna().sum()
+    pps["association_score"] = pps["association_score"].fillna(0.0)
+    pps["severity_score"] = pps["severity_score"].fillna(0.0)
+    pps["pps"] = (
+        0.40 * pps["frequency_score"]
+        - 0.30 * pps["association_score"]
+        - 0.30 * pps["severity_score"]
+    )
+    pps["pps_rank"] = pps["pps"].rank(
+        method="dense",
+        ascending=False,
+    ).astype("int64")
+    logging.info(
+        "Filled zero Association scores for %s contexts and zero Severity scores "
+        "for %s contexts",
+        missing_association,
+        missing_severity,
+    )
+    return pps.sort_values(["pps", "occurrence_count"], ascending=False).reset_index(
+        drop=True
+    )
+
+
+def save_pps_result(pps: pd.DataFrame, output_path: Path) -> None:
+    """Save the requested PPS ranking columns in descending order.
+
+    Args:
+        pps: Calculated PPS result.
+        output_path: Destination CSV path.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output = pps.rename(
+        columns={
+            "place": "사고장소",
+            "activity": "사고당시활동",
+            "accident_type": "사고형태",
+            "occurrence_count": "발생빈도",
+            "frequency_score": "Frequency Score",
+            "association_score": "Association Score",
+            "severity_score": "Severity Score",
+            "pps": "PPS",
+            "pps_rank": "PPS Rank",
+        }
+    )
+    output = output.loc[
+        :,
+        [
+            "사고장소",
+            "사고당시활동",
+            "사고형태",
+            "발생빈도",
+            "Frequency Score",
+            "Association Score",
+            "Severity Score",
+            "PPS",
+            "PPS Rank",
+        ],
+    ]
+    output.to_csv(output_path, index=False, encoding="utf-8-sig")
+    logging.info("Saved %s PPS risk contexts to %s", len(output), output_path)
+
+
+def main() -> None:
+    """Run context-level PPS calculation from all three score components."""
+    configure_logging()
+    try:
+        accident_data = load_csv(ACCIDENT_INPUT_PATH, RISK_CONTEXT_COLUMNS)
+        compensation_data = load_csv(
+            COMPENSATION_INPUT_PATH,
+            [*RISK_CONTEXT_COLUMNS, *PAYMENT_COLUMNS],
+        )
+        rules = load_csv(
+            RULES_INPUT_PATH,
+            ["antecedents", "consequents", "confidence", "lift"],
+        )
+        frequency = calculate_frequency_scores(accident_data)
+        association = calculate_association_scores(rules)
+        severity = calculate_severity_scores(compensation_data)
+        save_pps_result(calculate_pps(frequency, association, severity), OUTPUT_PATH)
+    except (FileNotFoundError, OSError, ValueError, pd.errors.ParserError) as error:
+        logging.error("PPS calculation failed: %s", error)
+        raise
+
+
+if __name__ == "__main__":
+    main()

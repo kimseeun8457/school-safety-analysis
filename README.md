@@ -86,13 +86,13 @@ Frequency + Association + Severity → PPS → 시각화 및 정책 제안
 
 ## Preventive Priority Score (PPS)
 
-PPS는 다음 세 요소를 0~1 범위로 정규화한 가중합입니다.
+위험상황은 `사고장소 + 사고당시활동 + 사고형태` 조합으로 정의한다. PPS는 다음 세 요소를 동일한 위험상황 단위에서 산출한다.
 
 - **Frequency**: 위험상황의 사고 발생 빈도
-- **Association**: 연관규칙의 confidence와 lift로 측정한 결합 강도
-- **Severity**: 보상 데이터로 산출한 피해 규모
+- **Association**: `0.5 × normalized(confidence) - 0.5 × normalized(lift)`를 규칙별로 계산한 뒤 위험상황별 평균
+- **Severity**: 동일 위험상황의 중앙 보상금을 Min-Max 정규화한 값
 
-기본 가중치는 Frequency 0.40, Association 0.30, Severity 0.30입니다.
+`PPS = 0.40 × Frequency - 0.30 × Association - 0.30 × Severity`로 계산한다. Support는 Frequency에 이미 반영되므로 Association에 사용하지 않는다.
 
 ## 참고 문서
 

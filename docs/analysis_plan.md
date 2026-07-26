@@ -52,10 +52,14 @@ EDA에서는 연도, 월, 학년, 성별, 요일, 원본 사고시간, 장소, �
 
 ## PPS
 
-PPS는 Frequency, Association, Severity를 Min-Max 정규화한 뒤 가중합으로 계산한다.
+위험상황은 `사고장소 + 사고당시활동 + 사고형태` 조합으로 정의한다. Frequency, Association, Severity는 모두 이 동일한 단위에서 계산한다.
+
+- Frequency는 위험상황별 발생 빈도를 Min-Max 정규화한다.
+- Association은 완전한 위험상황을 포함한 Apriori 규칙의 `0.5 × normalized(confidence) - 0.5 × normalized(lift)`를 평균한다. Support는 Frequency에 이미 반영되므로 사용하지 않는다.
+- Severity는 동일 위험상황의 중앙 보상금을 Min-Max 정규화한다.
 
 ```text
-PPS = 0.40 × Frequency + 0.30 × Association + 0.30 × Severity
+PPS = 0.40 × Frequency - 0.30 × Association - 0.30 × Severity
 ```
 
 Association은 Apriori 규칙의 confidence와 lift를 바탕으로 산출한다. 가중치 변화에 따른 순위 안정성은 후속 민감도 분석에서 검토한다.

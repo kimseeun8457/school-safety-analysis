@@ -30,7 +30,9 @@
 
 ## PPS 연계
 
-Apriori의 연관 강도는 PPS의 Association 요소로 활용한다. Frequency와 Severity를 함께 고려해 단순히 많이 발생하는 사고뿐 아니라 반복적으로 결합되는 위험상황을 우선 관리한다.
+완전한 위험상황(장소·사고당시활동·사고형태)을 포함한 규칙만 PPS에 연결한다. Association Score는 규칙별 `0.5 × normalized(confidence) - 0.5 × normalized(lift)`를 계산한 뒤 같은 위험상황에서 평균한다. Support는 Frequency에 이미 반영되므로 사용하지 않는다.
+
+Severity는 동일 위험상황의 중앙 보상금을 정규화해 산출한다. 최종 PPS는 `0.40 × Frequency - 0.30 × Association - 0.30 × Severity`를 적용한다.
 
 ## 한계
 
