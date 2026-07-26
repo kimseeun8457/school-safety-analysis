@@ -3,10 +3,6 @@ numpy
 matplotlib
 seaborn
 scipy
-statsmodels
-scikit-learn
-xgboost
-shap
-joblib
-tqdm
+mlxtend
+PyYAML
 openpyxl

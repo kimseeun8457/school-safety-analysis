@@ -45,12 +45,9 @@ outputs/figures/*
 !outputs/tables/
 outputs/tables/*
 !outputs/tables/.gitkeep
-!outputs/models/
-outputs/models/*
-!outputs/models/.gitkeep
-!outputs/shap/
-outputs/shap/*
-!outputs/shap/.gitkeep
+!outputs/association_rules/
+outputs/association_rules/*
+!outputs/association_rules/.gitkeep
 !outputs/pps/
 outputs/pps/*
 !outputs/pps/.gitkeep
