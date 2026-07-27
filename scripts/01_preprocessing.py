@@ -10,7 +10,7 @@ from typing import Final
 import pandas as pd
 
 
-PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parents[1]
+PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parents[1] 
 RAW_DIR: Final[Path] = PROJECT_ROOT / "data" / "raw"
 ACCIDENT_INPUT_DIR: Final[Path] = RAW_DIR / "accident"
 COMPENSATION_INPUT_DIR: Final[Path] = RAW_DIR / "compensation"

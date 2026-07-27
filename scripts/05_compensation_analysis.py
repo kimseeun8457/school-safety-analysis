@@ -1,4 +1,4 @@
-"""Summarize compensation severity for elementary-school accident categories."""
+"""초등학교 안전사고 유형별 보상수준을 분석, 요약"""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ GROUP_COLUMNS: Final[list[str]] = [
 
 
 def configure_logging() -> None:
-    """Configure consistent console logging for compensation analysis."""
+    """보상 분석에 사용할 일관적인 콘솔 로깅 설정"""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(message)s",
@@ -40,17 +40,11 @@ def configure_logging() -> None:
 
 
 def load_compensation_data(input_path: Path) -> pd.DataFrame:
-    """Load and validate cleaned compensation data.
+    """
+    전처리된 보상 데이터의 유효성을 검증한다.
 
-    Args:
-        input_path: Path to ``compensation_clean.csv``.
-
-    Returns:
-        Validated compensation data.
-
-    Raises:
-        FileNotFoundError: If the preprocessed compensation file is absent.
-        ValueError: If required columns are missing or the data is invalid.
+    함수에 전달하는 입력값: compensation_clean.csv 파일
+    반환값: 유효성 검사를 통과한 보상 데이터(DataFrame)
     """
     required_columns = set(PAYMENT_COLUMNS) | set(GROUP_COLUMNS)
     if not input_path.is_file():
@@ -72,13 +66,12 @@ def load_compensation_data(input_path: Path) -> pd.DataFrame:
 
 
 def add_total_compensation(data: pd.DataFrame) -> pd.DataFrame:
-    """Calculate the total compensation amount for each accident record.
+    """
+    사고별 총 보상금액을 계산한다.
 
-    Args:
-        data: Validated compensation data.
+    함수에 전달하는 입력값: 유효성 검사를 통과한 보상 데이터(DataFrame)
 
-    Returns:
-        Copy of data with a numeric ``total_compensation`` column.
+    반환값: total_compensation(총 보상금액) 컬럼이 추가된 데이터(DataFrame)
     """
     enriched = data.copy()
     enriched["total_compensation"] = enriched[PAYMENT_COLUMNS].sum(axis=1)
@@ -86,14 +79,12 @@ def add_total_compensation(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def summarize_by_category(data: pd.DataFrame, group_column: str) -> pd.DataFrame:
-    """Calculate compensation distribution statistics for one category.
+    """ 하나의 범주형 변수에 대한 보상금 분포 통계를 계산한다.
 
-    Args:
-        data: Compensation data with total compensation values.
-        group_column: Categorical column used for grouping.
-
-    Returns:
-        Category-level count and compensation distribution statistics.
+    함수에 전달하는 입력값:
+    - 총 보상금액(total_compensation)이 포함된 보상 데이터(DataFrame)
+    - 그룹화에 사용할 범주형 변수명(group_column)
+    반환값: 범주별 사고 건수와 보상금 분포 통계 데이터(DataFrame)
     """
     grouped = data.groupby(group_column, observed=True)["total_compensation"]
     summary = grouped.agg(
@@ -119,28 +110,18 @@ def summarize_by_category(data: pd.DataFrame, group_column: str) -> pd.DataFrame
         ascending=False,
     ).reset_index(drop=True)
 
-
 def create_severity_summary(data: pd.DataFrame) -> pd.DataFrame:
-    """Combine severity summaries for all planned compensation groupings.
-
-    Args:
-        data: Compensation data with total compensation values.
-
-    Returns:
-        Long-form severity summary for place, type, activity, and body part.
+    """ 범주별 보상 심각도 요약 정보를 생성.
+    함수에 전달하는 입력값: 총 보상금액(total_compensation)이 포함된 보상 데이터(DataFrame)
+    반환값: 사고장소, 사고형태, 사고당시활동, 사고부위별 보상 심각도 요약 데이터(DataFrame)
     """
     summaries = [summarize_by_category(data, column) for column in GROUP_COLUMNS]
     return pd.concat(summaries, ignore_index=True)
 
-
 def create_overview(data: pd.DataFrame) -> pd.DataFrame:
-    """Create an overall compensation overview for audit and reconciliation.
-
-    Args:
-        data: Compensation data with total compensation values.
-
-    Returns:
-        One-row overview of total compensation distribution statistics.
+    """보상 데이터의 전체 현황을 요약하여 검토 및 데이터 확인에 활용한다.
+    입력값: 총 보상금액(total_compensation)이 포함된 보상 데이터(DataFrame)
+    반환값: 전체 보상금 분포 통계를 요약한 1행 데이터(DataFrame)
     """
     total_compensation = data["total_compensation"]
     return pd.DataFrame(
@@ -162,19 +143,17 @@ def create_overview(data: pd.DataFrame) -> pd.DataFrame:
         ]
     )
 
-
 def save_results(
     severity_summary: pd.DataFrame,
     overview: pd.DataFrame,
     output_dir: Path,
 ) -> None:
-    """Save compensation severity tables to the project output directory.
-
-    Args:
-        severity_summary: Category-level severity distribution statistics.
-        overview: Overall compensation distribution statistics.
-        output_dir: Destination directory for CSV outputs.
-    """
+    """ 보상 심각도 분석 결과를 CSV 파일로 저장한다.
+    입력값:
+    - 범주별 보상 심각도 분포 통계 데이터(severity_summary)
+    - 전체 보상금 분포 통계 데이터(overview)
+    - CSV 파일을 저장할 출력 폴더 경로(output_dir)
+"""
     output_dir.mkdir(parents=True, exist_ok=True)
     severity_summary.to_csv(
         output_dir / "severity_summary.csv",
@@ -190,7 +169,6 @@ def save_results(
 
 
 def main() -> None:
-    """Run compensation severity analysis for planned category groupings."""
     configure_logging()
     try:
         data = add_total_compensation(load_compensation_data(INPUT_PATH))
